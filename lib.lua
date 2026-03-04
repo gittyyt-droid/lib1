@@ -47,10 +47,30 @@ function Library:save_flags()
 end
 
 function Library:load_flags()
-    if not isfile(`Rise/{game.GameId}.lua`) then Library.save_flags() return end
+    if not isfile(`Rise/{game.GameId}.lua`) then 
+        Library.save_flags() 
+        return 
+    end
+    
     local flags = readfile(`Rise/{game.GameId}.lua`)
-    if not flags then Library.save_flags() return end
-    Library.Flags = HttpService:JSONDecode(flags)
+    if not flags or flags == "" then 
+        Library.save_flags() 
+        return 
+    end
+    
+    -- Add pcall to handle JSON parsing errors
+    local success, decoded = pcall(function()
+        return HttpService:JSONDecode(flags)
+    end)
+    
+    if success then
+        Library.Flags = decoded
+    else
+        -- If JSON parsing fails, reset the flags file
+        warn("Failed to parse flags file, resetting...")
+        Library.Flags = {}
+        Library.save_flags()
+    end
 end
 Library.load_flags()
 Library.clear()
